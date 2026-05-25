@@ -38,9 +38,8 @@ jobs:
 
       - name: Zip artifact for deployment
         run: |
-          cd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          # Static Export モードなので out フォルダをzipする
-          zip -r ../release.zip out/
+          cd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/out'
+          zip -r ../../release.zip .
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -60,8 +59,9 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: |
-          mkdir -p deploy
-          unzip -o release.zip -d deploy
+          unzip -o release.zip -d $RUNNER_TEMP/deploy
+          echo "Contents of deploy directory:"
+          ls -la $RUNNER_TEMP/deploy
           
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v2
@@ -69,4 +69,4 @@ jobs:
           app-name: 'tech0-search-frontend-MasaTaka'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D778FDD0709F4EC98A2EF78048736800 }}
-          package: ./deploy/out
+          package: $RUNNER_TEMP/deploy
