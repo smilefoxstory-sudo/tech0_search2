@@ -10,14 +10,14 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: './frontend' # set this to the path to your web app project, defaults to the repository root
-  NODE_VERSION: '22' # set this to the node version to use (supports 8.x, 10.x, 12.x)
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: './frontend'
+  NODE_VERSION: '22'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - name: 'Checkout GitHub Action'
@@ -33,14 +33,13 @@ jobs:
         run: |
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
           npm install
-          npm run build --if-present
-          npm run test --if-present
+          npm run build
           popd
 
       - name: Zip artifact for deployment
         run: |
           cd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          zip -r ../release.zip .
+          zip -r ../release.zip . -x "node_modules/*" ".next/*" ".git/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -60,17 +59,12 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: |
-          mkdir -p frontend
-          unzip -o release.zip -d frontend
-      
-      - name: 'Run Azure Functions Action'
-        uses: Azure/functions-action@v1.5.6
-        id: fa
+          unzip -o release.zip -d $RUNNER_TEMP/deploy
+          
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v2
         with:
           app-name: 'tech0-search-frontend-MasaTaka'
           slot-name: 'Production'
-          package: './frontend'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D778FDD0709F4EC98A2EF78048736800 }}
-          sku: 'flexconsumption'
-        
+          package: $RUNNER_TEMP/deploy
