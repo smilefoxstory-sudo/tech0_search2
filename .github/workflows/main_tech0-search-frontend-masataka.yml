@@ -60,7 +60,8 @@ jobs:
 
       - name: Unzip artifact for deployment
         run: |
-          unzip -o release.zip -d ./frontend
+          mkdir -p frontend
+          unzip -o release.zip -d frontend
       
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1.5.6
@@ -68,6 +69,7 @@ jobs:
         with:
           app-name: 'tech0-search-frontend-MasaTaka'
           slot-name: 'Production'
+          package: './frontend'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D778FDD0709F4EC98A2EF78048736800 }}
           sku: 'flexconsumption'
